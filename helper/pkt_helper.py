@@ -3,14 +3,13 @@ from ryu.lib.packet import ethernet, ipv4, tcp, packet
 
 
 def build_syn_packet():
-    print 'build pkt'
-    e = ethernet.ethernet(dst='ff:ff:ff:ff:ff:ff',
-                          src='00:1e:68:bb:b5:2e',
+    e = ethernet.ethernet(dst='00:1e:68:bb:b5:2e',
+                          src='00:23:54:6c:29:14',
                           ethertype=ether.ETH_TYPE_IP)
     i = ipv4.ipv4(dst='140.114.71.177',
-                  src='192.168.11.21',
+                  src='192.168.11.23',
                   proto=inet.IPPROTO_TCP)
-    t = tcp.tcp(src_port=5566,
+    t = tcp.tcp(src_port=5656,
                 dst_port=9292,
                 bits=tcp.TCP_SYN)
 
@@ -19,5 +18,4 @@ def build_syn_packet():
     p.add_protocol(i)
     p.add_protocol(t)
     p.serialize()
-    print repr(p)
     return p

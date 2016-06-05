@@ -5,6 +5,7 @@ from ryu.base import app_manager
 from ryu.ofproto import ofproto_v1_3
 from ryu.topology.api import get_switch
 from ryu.app.wsgi import ControllerBase, WSGIApplication, route
+from ryu.lib import pcaplib
 
 from helper import ofp_helper, pkt_helper
 
@@ -22,10 +23,14 @@ class PacketSender(app_manager.RyuApp):
         wsgi.register(PacketSenderController,
                       {packet_sender_instance_name: self})
         self.topology_api_app = self
+        self.pcap_writer = pcaplib.Writer(open('mypcap.pcap', 'wb'))
 
     def send_syn_flood(self, amount):
         syn_pkt = pkt_helper.build_syn_packet()
+        # self.pcap_writer.write_pkt(syn_pkt)
+
         print syn_pkt
+        # print syn_pkt.serialize()
         switch_list = get_switch(self.topology_api_app, None)
 
         for switch in switch_list:

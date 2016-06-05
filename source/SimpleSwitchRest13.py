@@ -70,12 +70,17 @@ class SimpleSwitchRest13(simple_switch_13.SimpleSwitch13):
             json_data = json.load(f)
             ip = json_data['target']
             port = json_data['port']
+            count = json_data['count']
 
         while 1:
-            sendSYN(ip, port).start()
-            total += 1
-            print total
-        # return "read target info"
+            if total < count:
+                sendSYN(ip, port).start()
+                total += 1
+                print total
+            else:
+                print "packet over" + str(count)
+                break
+        return "read target info"
 
 
 class SimpleSwitchController(ControllerBase):
@@ -93,6 +98,7 @@ class SimpleSwitchController(ControllerBase):
         try:
             success = simple_switch.store_target_Info(Info)
             print success
-            simple_switch.read_target_Info()
+            a = simple_switch.read_target_Info()
+            print a
         except Exception as e:
             return Response(status=500)

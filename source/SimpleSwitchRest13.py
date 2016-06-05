@@ -19,7 +19,6 @@ from scapy.all import *
 
 simple_switch_instance_name = 'simple_switch_api_app'
 url = '/hello'
-total = 0
 conf.iface = 'eth0'
 
 
@@ -66,6 +65,7 @@ class SimpleSwitchRest13(simple_switch_13.SimpleSwitch13):
         return "get target info"
 
     def read_target_Info(self):
+        total = 0
         with open('../ipInfo/target.json', 'r') as f:
             json_data = json.load(f)
             ip = json_data['target']
@@ -73,6 +73,7 @@ class SimpleSwitchRest13(simple_switch_13.SimpleSwitch13):
 
         while 1:
             sendSYN(ip, port).start()
+            total += 1
             print total
         # return "read target info"
 
@@ -90,7 +91,8 @@ class SimpleSwitchController(ControllerBase):
         Info = json.loads(req.body)
 
         try:
-            simple_switch.store_target_Info(Info)
+            success = simple_switch.store_target_Info(Info)
+            print success
             simple_switch.read_target_Info()
         except Exception as e:
             return Response(status=500)

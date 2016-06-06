@@ -17,7 +17,8 @@ import random
 
 
 simple_switch_instance_name = 'simple_switch_api_app'
-url = '/hello'
+url_time = '/time'
+url_count = '/count'
 conf.iface = 'eth0'
 
 
@@ -60,9 +61,9 @@ class SimpleSwitchRest13(simple_switch_13.SimpleSwitch13):
         with open('../ipInfo/target.json', 'w') as f:
             f.write(json.dumps(info))
         f.close()
-        return "get target info"
+        return "get target info."
 
-    def read_target_Info(self):
+    def send_time(self):
         total = 0
         with open('../ipInfo/target.json', 'r') as f:
             json_data = json.load(f)
@@ -76,9 +77,27 @@ class SimpleSwitchRest13(simple_switch_13.SimpleSwitch13):
                 total += 1
                 print total
             else:
-                print "Send one minute"
+                print "Send one minute."
                 break
-        return "read target info"
+        return "It't done."
+
+    def send_count(self):
+        total = 0
+        with open('../ipInfo/target.json', 'r') as f:
+            json_data = json.load(f)
+            ip = json_data['target']
+            port = json_data['port']
+            count = json_data['count']
+
+        while 1:
+            if total < count:
+                sendSYN(ip, port).run()
+                total += 1
+                print total
+            else:
+                print "Send one hundred."
+                break
+        return "It't done."
 
 
 class SimpleSwitchController(ControllerBase):
@@ -87,8 +106,23 @@ class SimpleSwitchController(ControllerBase):
         super(SimpleSwitchController, self).__init__(req, link, data, **config)
         self.simpl_switch_spp = data[simple_switch_instance_name]
 
-    @route('simpleswitch', url, methods=['POST'])
-    def get_target_Info(self, req, **kwargs):
+    @route('simpleswitch', url_time, methods=['POST'])
+    def send_packet_bytime(self, req, **kwargs):
+
+        simple_switch = self.simpl_switch_spp
+        Info = json.loads(req.body)
+        print Info
+
+        try:
+            success = simple_switch.store_target_Info(Info)
+            print success
+            check = simple_switch.send_time()
+            print check
+        except Exception as e:
+            return Response(status=500)
+
+    @route('simpleswitch', url_count, methods=['POST'])
+    def send_packet_bycount(self, req, **kwargs):
 
         simple_switch = self.simpl_switch_spp
         Info = json.loads(req.body)
@@ -96,7 +130,7 @@ class SimpleSwitchController(ControllerBase):
         try:
             success = simple_switch.store_target_Info(Info)
             print success
-            a = simple_switch.read_target_Info()
-            print a
+            check = simple_switch.send_count()
+            print check
         except Exception as e:
             return Response(status=500)

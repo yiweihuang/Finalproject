@@ -61,7 +61,6 @@ class PacketSender(simple_switch_13.SimpleSwitch13):
         with open('../ipInfo/target.json', 'w') as f:
             f.write(json.dumps(info))
         f.close()
-        return "get target info."
 
     def send_time(self):
         total = 0
@@ -80,7 +79,6 @@ class PacketSender(simple_switch_13.SimpleSwitch13):
             else:
                 print "Send one minute."
                 break
-        return "It't done."
 
     def send_count(self):
         total = 0
@@ -90,8 +88,6 @@ class PacketSender(simple_switch_13.SimpleSwitch13):
             ip = socket.gethostbyname(Hostname)
             port = json_data['port']
             count = json_data['count']
-            print "Hostname:" + Hostname
-            print "IP:" + ip
 
         while 1:
             if total < count:
@@ -101,7 +97,6 @@ class PacketSender(simple_switch_13.SimpleSwitch13):
             else:
                 print "Send one hundred."
                 break
-        return "It't done."
 
 
 class PacketSenderController(ControllerBase):
@@ -131,9 +126,7 @@ class PacketSenderController(ControllerBase):
         Info = json.loads(req.body)
 
         try:
-            success = simple_switch.store_target_Info(Info)
-            print success
-            check = simple_switch.send_count()
-            print check
+            simple_switch.store_target_Info(Info)
+            simple_switch.send_count()
         except Exception as e:
             return Response(status=500)

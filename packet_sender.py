@@ -1,5 +1,4 @@
 import json
-import logging
 
 from ryu.app import simple_switch_13
 from webob import Response
@@ -7,20 +6,15 @@ from ryu.controller import ofp_event
 from ryu.controller.handler import CONFIG_DISPATCHER
 from ryu.controller.handler import set_ev_cls
 from ryu.app.wsgi import ControllerBase, WSGIApplication, route
-from ryu.lib import dpid as dpid_lib
-import json
 import socket
 import time
-import sys
+
+from route import urls
+from helper import file_helper
 from scapy.all import *
 import random
 
-
 packet_sender_instance_name = 'packet_sender_api_app'
-hostname_url_time = '/send_packet/hostname/time'
-hostname_url_count = '/send_packet/hostname'
-ip_url_time = '/send_packet/ip_port/time'
-ip_url_count = '/send_packet/ip_port'
 conf.iface = 'eth0'
 
 
@@ -59,15 +53,16 @@ class PacketSender(simple_switch_13.SimpleSwitch13):
         self.switches[datapath.id] = datapath
         self.mac_to_port.setdefault(datapath.id, {})
 
-    def store_target_Info(self, info):
-        with open('../ipInfo/target.json', 'w') as f:
+    def store_file(self, info, filename):
+        path = '../config/' + filename
+        with open(path, 'w') as f:
             f.write(json.dumps(info))
         f.close()
 
-    #Hostname
+    # Hostname
     def send_time_hostname(self):
         total = 0
-        with open('../ipInfo/target.json', 'r') as f:
+        with open('../config/target.json', 'r') as f:
             json_data = json.load(f)
             Hostname = json_data['target']
             ip = socket.gethostbyname(Hostname)
@@ -85,7 +80,7 @@ class PacketSender(simple_switch_13.SimpleSwitch13):
 
     def send_count_hostname(self):
         total = 0
-        with open('../ipInfo/target.json', 'r') as f:
+        with open('../config/target.json', 'r') as f:
             json_data = json.load(f)
             Hostname = json_data['target']
             ip = socket.gethostbyname(Hostname)
@@ -104,12 +99,12 @@ class PacketSender(simple_switch_13.SimpleSwitch13):
     # IP address
     def send_time_ip(self):
         total = 0
-        with open('../ipInfo/target.json', 'r') as f:
-            json_data = json.load(f)
-            ipaddr = json_data['target']
-            ip = ipaddr.split(':')[0]
-            port = int(ipaddr.split(':')[1])
-            runtime = time.time() + 60
+        json_data = file_helper.read_file('target.json')
+
+        ipaddr = json_data['target']
+        ip = ipaddr.split(':')[0]
+        port = int(ipaddr.split(':')[1])
+        runtime = time.time() + 60
 
         while 1:
             if time.time() < runtime:
@@ -122,12 +117,12 @@ class PacketSender(simple_switch_13.SimpleSwitch13):
 
     def send_count_ip(self):
         total = 0
-        with open('../ipInfo/target.json', 'r') as f:
-            json_data = json.load(f)
-            ipaddr = json_data['target']
-            ip = ipaddr.split(':')[0]
-            port = int(ipaddr.split(':')[1])
-            count = json_data['count']
+
+        json_data = file_helper.read_file('target.json')
+        ipaddr = json_data['target']
+        ip = ipaddr.split(':')[0]
+        port = int(ipaddr.split(':')[1])
+        count = json_data['count']
 
         while 1:
             if total < count:
@@ -146,55 +141,55 @@ class PacketSenderController(ControllerBase):
         self.packet_sender_spp = data[packet_sender_instance_name]
 
     # hostname
-    @route('simpleswitch', hostname_url_time, methods=['POST'])
+    @route('packet_sender', urls.hostname_time, methods=['POST'])
     def hn_sendpacket_bytime(self, req, **kwargs):
 
         packet_sender = self.packet_sender_spp
         Info = json.loads(req.body)
 
         try:
-            packet_sender.store_target_Info(Info)
+            file_helper.store_file(Info, 'target.json')
             packet_sender.send_time_hostname()
 
-        except Exception as e:
+        except:
             return Response(status=500)
 
-    @route('simpleswitch', hostname_url_count, methods=['POST'])
+    @route('packet_sender', urls.hostname_count, methods=['POST'])
     def hn_sendpacket_bycount(self, req, **kwargs):
 
         packet_sender = self.packet_sender_spp
         Info = json.loads(req.body)
 
         try:
-            packet_sender.store_target_Info(Info)
+            file_helper.store_file(Info, 'target.json')
             packet_sender.send_count_hostname()
 
-        except Exception as e:
+        except:
             return Response(status=500)
 
     # IP address
-    @route('simpleswitch', ip_url_time, methods=['POST'])
+    @route('packet_sender', urls.ip_time, methods=['POST'])
     def ip_sendpacket_bytime(self, req, **kwargs):
 
         packet_sender = self.packet_sender_spp
         Info = json.loads(req.body)
 
         try:
-            packet_sender.store_target_Info(Info)
+            file_helper.store_file(Info, 'target.json')
             packet_sender.send_time_ip()
 
-        except Exception as e:
+        except:
             return Response(status=500)
 
-    @route('simpleswitch', ip_url_count, methods=['POST'])
+    @route('packet_sender', urls.ip_count, methods=['POST'])
     def ip_sendpacket_bycount(self, req, **kwargs):
 
         packet_sender = self.packet_sender_spp
         Info = json.loads(req.body)
 
         try:
-            packet_sender.store_target_Info(Info)
+            file_helper.store_file(Info, 'target.json')
             packet_sender.send_count_ip()
 
-        except Exception as e:
+        except:
             return Response(status=500)

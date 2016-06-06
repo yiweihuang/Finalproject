@@ -16,9 +16,11 @@ from scapy.all import *
 import random
 
 
-simple_switch_instance_name = 'simple_switch_api_app'
-url_time = '/time'
-url_count = '/count'
+packet_sender_instance_name = 'packet_sender_api_app'
+hostname_url_time = '/send_packet/hostname/time'
+hostname_url_count = '/send_packet/hostname/'
+ip_url_time = '/send_packet/ip_port/time'
+ip_url_count = '/send_packet/ip_port/'
 conf.iface = 'eth0'
 
 
@@ -48,7 +50,7 @@ class PacketSender(simple_switch_13.SimpleSwitch13):
         self.switches = {}
         wsgi = kwargs['wsgi']
         wsgi.register(PacketSenderController,
-                      {simple_switch_instance_name: self})
+                      {packet_sender_instance_name: self})
 
     @set_ev_cls(ofp_event.EventOFPSwitchFeatures, CONFIG_DISPATCHER)
     def switch_features_handler(self, ev):
@@ -62,7 +64,7 @@ class PacketSender(simple_switch_13.SimpleSwitch13):
             f.write(json.dumps(info))
         f.close()
 
-    def send_time(self):
+    def send_time_hostname(self):
         total = 0
         with open('../ipInfo/target.json', 'r') as f:
             json_data = json.load(f)
@@ -80,7 +82,7 @@ class PacketSender(simple_switch_13.SimpleSwitch13):
                 print "Send one minute."
                 break
 
-    def send_count(self):
+    def send_count_hostname(self):
         total = 0
         with open('../ipInfo/target.json', 'r') as f:
             json_data = json.load(f)
@@ -103,30 +105,30 @@ class PacketSenderController(ControllerBase):
 
     def __init__(self, req, link, data, **config):
         super(PacketSenderController, self).__init__(req, link, data, **config)
-        self.simpl_switch_spp = data[simple_switch_instance_name]
+        self.simpl_switch_spp = data[packet_sender_instance_name]
 
-    @route('simpleswitch', url_time, methods=['POST'])
+    @route('simpleswitch', hostname_url_time, methods=['POST'])
     def send_packet_bytime(self, req, **kwargs):
 
-        simple_switch = self.simpl_switch_spp
+        packet_sender = self.simpl_switch_spp
         Info = json.loads(req.body)
 
         try:
-            success = simple_switch.store_target_Info(Info)
-            print success
-            check = simple_switch.send_time()
-            print check
+            packet_sender.store_target_Info(Info)
+            packet_sender.send_time_hostname()
+
         except Exception as e:
             return Response(status=500)
 
-    @route('simpleswitch', url_count, methods=['POST'])
+    @route('simpleswitch', hostname_url_count, methods=['POST'])
     def send_packet_bycount(self, req, **kwargs):
 
-        simple_switch = self.simpl_switch_spp
+        packet_sender = self.simpl_switch_spp
         Info = json.loads(req.body)
 
         try:
-            simple_switch.store_target_Info(Info)
-            simple_switch.send_count()
+            packet_sender.store_target_Info(Info)
+            packet_sender.send_count_hostname()
+
         except Exception as e:
             return Response(status=500)

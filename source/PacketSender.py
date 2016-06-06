@@ -18,9 +18,9 @@ import random
 
 packet_sender_instance_name = 'packet_sender_api_app'
 hostname_url_time = '/send_packet/hostname/time'
-hostname_url_count = '/send_packet/hostname/'
+hostname_url_count = '/send_packet/hostname'
 ip_url_time = '/send_packet/ip_port/time'
-ip_url_count = '/send_packet/ip_port/'
+ip_url_count = '/send_packet/ip_port'
 conf.iface = 'eth0'
 
 
@@ -64,13 +64,14 @@ class PacketSender(simple_switch_13.SimpleSwitch13):
             f.write(json.dumps(info))
         f.close()
 
+    #Hostname
     def send_time_hostname(self):
         total = 0
         with open('../ipInfo/target.json', 'r') as f:
             json_data = json.load(f)
             Hostname = json_data['target']
             ip = socket.gethostbyname(Hostname)
-            port = json_data['port']
+            port = 80
             runtime = time.time() + 60
 
         while 1:
@@ -88,7 +89,7 @@ class PacketSender(simple_switch_13.SimpleSwitch13):
             json_data = json.load(f)
             Hostname = json_data['target']
             ip = socket.gethostbyname(Hostname)
-            port = json_data['port']
+            port = 80
             count = json_data['count']
 
         while 1:
@@ -97,7 +98,44 @@ class PacketSender(simple_switch_13.SimpleSwitch13):
                 total += 1
                 print total
             else:
-                print "Send one hundred."
+                print "Send " + str(total) + " packet"
+                break
+
+    # IP address
+    def send_time_ip(self):
+        total = 0
+        with open('../ipInfo/target.json', 'r') as f:
+            json_data = json.load(f)
+            ipaddr = json_data['target']
+            ip = ipaddr.split(':')[0]
+            port = int(ipaddr.split(':')[1])
+            runtime = time.time() + 60
+
+        while 1:
+            if time.time() < runtime:
+                sendSYN(ip, port).run()
+                total += 1
+                print total
+            else:
+                print "Send one minute."
+                break
+
+    def send_count_ip(self):
+        total = 0
+        with open('../ipInfo/target.json', 'r') as f:
+            json_data = json.load(f)
+            ipaddr = json_data['target']
+            ip = ipaddr.split(':')[0]
+            port = int(ipaddr.split(':')[1])
+            count = json_data['count']
+
+        while 1:
+            if total < count:
+                sendSYN(ip, port).run()
+                total += 1
+                print total
+            else:
+                print "Send " + str(total) + " packet"
                 break
 
 
@@ -105,12 +143,13 @@ class PacketSenderController(ControllerBase):
 
     def __init__(self, req, link, data, **config):
         super(PacketSenderController, self).__init__(req, link, data, **config)
-        self.simpl_switch_spp = data[packet_sender_instance_name]
+        self.packet_sender_spp = data[packet_sender_instance_name]
 
+    # hostname
     @route('simpleswitch', hostname_url_time, methods=['POST'])
-    def send_packet_bytime(self, req, **kwargs):
+    def hn_sendpacket_bytime(self, req, **kwargs):
 
-        packet_sender = self.simpl_switch_spp
+        packet_sender = self.packet_sender_spp
         Info = json.loads(req.body)
 
         try:
@@ -121,14 +160,41 @@ class PacketSenderController(ControllerBase):
             return Response(status=500)
 
     @route('simpleswitch', hostname_url_count, methods=['POST'])
-    def send_packet_bycount(self, req, **kwargs):
+    def hn_sendpacket_bycount(self, req, **kwargs):
 
-        packet_sender = self.simpl_switch_spp
+        packet_sender = self.packet_sender_spp
         Info = json.loads(req.body)
 
         try:
             packet_sender.store_target_Info(Info)
             packet_sender.send_count_hostname()
+
+        except Exception as e:
+            return Response(status=500)
+
+    # IP address
+    @route('simpleswitch', ip_url_time, methods=['POST'])
+    def ip_sendpacket_bytime(self, req, **kwargs):
+
+        packet_sender = self.packet_sender_spp
+        Info = json.loads(req.body)
+
+        try:
+            packet_sender.store_target_Info(Info)
+            packet_sender.send_time_ip()
+
+        except Exception as e:
+            return Response(status=500)
+
+    @route('simpleswitch', ip_url_count, methods=['POST'])
+    def ip_sendpacket_bycount(self, req, **kwargs):
+
+        packet_sender = self.packet_sender_spp
+        Info = json.loads(req.body)
+
+        try:
+            packet_sender.store_target_Info(Info)
+            packet_sender.send_count_ip()
 
         except Exception as e:
             return Response(status=500)

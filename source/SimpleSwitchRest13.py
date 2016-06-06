@@ -39,20 +39,20 @@ class sendSYN():
         send(i/t, verbose=0)
 
 
-class SimpleSwitchRest13(simple_switch_13.SimpleSwitch13):
+class PacketSender(simple_switch_13.SimpleSwitch13):
 
     _CONTEXTS = {'wsgi': WSGIApplication}
 
     def __init__(self, *args, **kwargs):
-        super(SimpleSwitchRest13, self).__init__(*args, **kwargs)
+        super(PacketSender, self).__init__(*args, **kwargs)
         self.switches = {}
         wsgi = kwargs['wsgi']
-        wsgi.register(SimpleSwitchController,
+        wsgi.register(PacketSenderController,
                       {simple_switch_instance_name: self})
 
     @set_ev_cls(ofp_event.EventOFPSwitchFeatures, CONFIG_DISPATCHER)
     def switch_features_handler(self, ev):
-        super(SimpleSwitchRest13, self).switch_features_handler(ev)
+        super(PacketSender, self).switch_features_handler(ev)
         datapath = ev.msg.datapath
         self.switches[datapath.id] = datapath
         self.mac_to_port.setdefault(datapath.id, {})
@@ -67,7 +67,8 @@ class SimpleSwitchRest13(simple_switch_13.SimpleSwitch13):
         total = 0
         with open('../ipInfo/target.json', 'r') as f:
             json_data = json.load(f)
-            ip = json_data['target']
+            Hostname = json_data['target']
+            ip = socket.gethostbyname(Hostname)
             port = json_data['port']
             runtime = time.time() + 60
 
@@ -85,9 +86,12 @@ class SimpleSwitchRest13(simple_switch_13.SimpleSwitch13):
         total = 0
         with open('../ipInfo/target.json', 'r') as f:
             json_data = json.load(f)
-            ip = json_data['target']
+            Hostname = json_data['target']
+            ip = socket.gethostbyname(Hostname)
             port = json_data['port']
             count = json_data['count']
+            print "Hostname:" + Hostname
+            print "IP:" + ip
 
         while 1:
             if total < count:
@@ -100,10 +104,10 @@ class SimpleSwitchRest13(simple_switch_13.SimpleSwitch13):
         return "It't done."
 
 
-class SimpleSwitchController(ControllerBase):
+class PacketSenderController(ControllerBase):
 
     def __init__(self, req, link, data, **config):
-        super(SimpleSwitchController, self).__init__(req, link, data, **config)
+        super(PacketSenderController, self).__init__(req, link, data, **config)
         self.simpl_switch_spp = data[simple_switch_instance_name]
 
     @route('simpleswitch', url_time, methods=['POST'])
@@ -111,7 +115,6 @@ class SimpleSwitchController(ControllerBase):
 
         simple_switch = self.simpl_switch_spp
         Info = json.loads(req.body)
-        print Info
 
         try:
             success = simple_switch.store_target_Info(Info)

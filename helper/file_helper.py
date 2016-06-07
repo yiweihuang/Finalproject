@@ -13,3 +13,12 @@ def read_file(filename):
         data = json.load(f)
 
     return data
+
+
+def info_builder(ip, port, count):
+    info = {
+        'ip': ip,
+        'port': port,
+        'count': count
+    }
+    return info

@@ -12,7 +12,7 @@ from ryu.topology.api import get_switch
 from ryu.lib import hub
 
 from config import stat_data
-from helper import ofp_helper, file_helper
+from helper import ofp_helper, file_helper, dns_helper
 from route import urls
 
 # from config import settings
@@ -138,21 +138,12 @@ class StatMonitorController(ControllerBase):
 
     @route('statistic', urls.stat_init, methods=['PUT'])
     def stat_init(self, req, **kwargs):
-        stat_monitor = self.stat_monitor_spp
-
-        info = json.loads(req.body)
-        file_helper.store_file(info, 'target.json')
-        stat_monitor.reset_counter()
-
-        stat_data.diff_arr = []
-        stat_data.diff_avg = 0
-        stat_data.is_count = 0
-        stat_data.prev_packet_count = 0
-        stat_data.prev_duration_msec = 0
         try:
             stat_monitor = self.stat_monitor_spp
 
-            info = json.loads(req.body)
+            req = json.loads(req.body)
+            ip, port = dns_helper.translate_target(req['target'])
+            info = file_helper.info_builder(ip, port, req['count'])
             file_helper.store_file(info, 'target.json')
             stat_monitor.reset_counter()
 

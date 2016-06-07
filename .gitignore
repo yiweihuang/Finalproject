@@ -1,2 +1,4 @@
+# python compile
 *.pyc
+
 config/target.json

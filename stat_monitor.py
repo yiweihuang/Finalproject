@@ -47,9 +47,9 @@ class StatMonitor(app_manager.RyuApp):
 
     def _reset_flow(self, datapath):
         parser = datapath.ofproto_parser
-        packet_info = file_helper.read_file('target.json')
-        ip = packet_info['target'].split(':')[0]
-        port = int(packet_info['target'].split(':')[1])
+        info = file_helper.read_file('target.json')
+        ip = info['ip']
+        port = info['port']
 
         syn_ack_match = parser.OFPMatch(eth_type=ether.ETH_TYPE_IP,
                                         ip_proto=inet.IPPROTO_TCP,

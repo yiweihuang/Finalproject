@@ -56,6 +56,11 @@ class PacketSender(app_manager.RyuApp):
         ip = socket.gethostbyname(Hostname)
         port = 80
 
+        # rewrite to target
+        info = {'count': json_data['count'],
+                'target': ip + ':' + str(port)}
+        file_helper.write_file(info, 'target.json')
+
         runtime = time.time() + 60
 
         while 1:
@@ -75,6 +80,11 @@ class PacketSender(app_manager.RyuApp):
         ip = socket.gethostbyname(Hostname)
         port = 80
         count = json_data['count']
+
+        # rewrite to target
+        info = {'count': json_data['count'],
+                'target': ip + ':' + str(port)}
+        file_helper.write_file(info, 'target.json')
 
         while 1:
             if total < count:

@@ -140,11 +140,12 @@ class StatMonitorController(ControllerBase):
     def stat_init(self, req, **kwargs):
         try:
             stat_monitor = self.stat_monitor_spp
-
             req = json.loads(req.body)
+
             ip, port = dns_helper.translate_target(req['target'])
             info = file_helper.info_builder(ip, port, req['count'])
             file_helper.store_file(info, 'target.json')
+
             stat_monitor.reset_counter()
 
             stat_data.diff_arr = []

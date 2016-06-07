@@ -62,10 +62,11 @@ class PacketSender(app_manager.RyuApp):
 
     def send_count_hostname(self):
         total = 0
-
         json_data = file_helper.read_file('target.json')
+
         ip = json_data['ip']
         port = json_data['port']
+        count = json_data['count']
 
         while 1:
             if total < count:
@@ -97,10 +98,11 @@ class PacketSender(app_manager.RyuApp):
 
     def send_count_ip(self):
         total = 0
-
         json_data = file_helper.read_file('target.json')
+
         ip = json_data['ip']
         port = json_data['port']
+        count = json_data['count']
 
         while 1:
             if total < count:
@@ -124,11 +126,12 @@ class PacketSenderController(ControllerBase):
         try:
             packet_sender = self.packet_sender_spp
             req = json.loads(req.body)
+
             ip, port = dns_helper.translate_target(req['target'])
             info = file_helper.info_builder(ip, port, req['count'])
             file_helper.store_file(info, 'target.json')
-            packet_sender.send_time_hostname()
 
+            packet_sender.send_time_hostname()
         except:
             return Response(status=500)
 
@@ -137,11 +140,12 @@ class PacketSenderController(ControllerBase):
         try:
             packet_sender = self.packet_sender_spp
             req = json.loads(req.body)
+
             ip, port = dns_helper.translate_target(req['target'])
             info = file_helper.info_builder(ip, port, req['count'])
             file_helper.store_file(info, 'target.json')
-            packet_sender.send_count_hostname()
 
+            packet_sender.send_count_hostname()
         except:
             return Response(status=500)
 
@@ -151,11 +155,12 @@ class PacketSenderController(ControllerBase):
         try:
             packet_sender = self.packet_sender_spp
             req = json.loads(req.body)
+
             ip, port = dns_helper.translate_target(req['target'])
             info = file_helper.info_builder(ip, port, req['count'])
             file_helper.store_file(info, 'target.json')
-            packet_sender.send_time_ip()
 
+            packet_sender.send_time_ip()
         except:
             return Response(status=500)
 
@@ -164,11 +169,11 @@ class PacketSenderController(ControllerBase):
         try:
             packet_sender = self.packet_sender_spp
             req = json.loads(req.body)
+
             ip, port = dns_helper.translate_target(req['target'])
             info = file_helper.info_builder(ip, port, req['count'])
-
             file_helper.store_file(info, 'target.json')
-            packet_sender.send_count_ip()
 
+            packet_sender.send_count_ip()
         except:
             return Response(status=500)

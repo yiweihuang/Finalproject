@@ -50,12 +50,13 @@ class PacketSender(app_manager.RyuApp):
     # Hostname
     def send_time_hostname(self):
         total = 0
-        with open('./config/target.json', 'r') as f:
-            json_data = json.load(f)
-            Hostname = json_data['target']
-            ip = socket.gethostbyname(Hostname)
-            port = 80
-            runtime = time.time() + 60
+        json_data = file_helper.read_file('target.json')
+
+        Hostname = json_data['target']
+        ip = socket.gethostbyname(Hostname)
+        port = 80
+
+        runtime = time.time() + 60
 
         while 1:
             if time.time() < runtime:
@@ -68,12 +69,12 @@ class PacketSender(app_manager.RyuApp):
 
     def send_count_hostname(self):
         total = 0
-        with open('./config/target.json', 'r') as f:
-            json_data = json.load(f)
-            Hostname = json_data['target']
-            ip = socket.gethostbyname(Hostname)
-            port = 80
-            count = json_data['count']
+
+        json_data = file_helper.read_file('target.json')
+        Hostname = json_data['target']
+        ip = socket.gethostbyname(Hostname)
+        port = 80
+        count = json_data['count']
 
         while 1:
             if total < count:

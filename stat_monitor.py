@@ -20,9 +20,9 @@ from route import urls
 stat_monitor_instance_name = 'stat_monitor_api_app'
 syn_flow = {
     'ip_src': '192.168.11.23',
-    'ip_dst': '140.114.71.177',
+    'ip_dst': '140.114.71.159',
     'port_src': 5566,
-    'port_dst': 9292
+    'port_dst': 80
 }
 group_ammount = 100
 

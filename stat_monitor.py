@@ -106,8 +106,8 @@ class StatMonitor(app_manager.RyuApp):
 
     def _is_syn_ack_rule(self, match):
         packet_info = file_helper.read_file('target.json')
-        ip = packet_info['target'].split(':')[0]
-        port = int(packet_info['target'].split(':')[1])
+        ip = packet_info['ip']
+        port = packet_info['port']
 
         is_ip_dst = (match.get('ipv4_src') == ip)
         is_tcp_dst = (match.get('tcp_src') == port)

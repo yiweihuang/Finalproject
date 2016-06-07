@@ -15,7 +15,7 @@ def translate_target(target):
         ip = find_host(target)
         port = 80
     else:
-        ip = target.split(':')[1]
-        port = int(target.split(':')[0])
+        ip = target.split(':')[0]
+        port = int(target.split(':')[1])
 
     return (ip, port)

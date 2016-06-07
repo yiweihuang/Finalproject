@@ -1,19 +1,13 @@
 from ryu.base import app_manager
 from webob import Response
-from ryu.controller import ofp_event
-from ryu.controller.handler import CONFIG_DISPATCHER
-from ryu.controller.handler import set_ev_cls
 from ryu.app.wsgi import ControllerBase, WSGIApplication, route
-from ryu.lib import dpid as dpid_lib
 import json
-import socket
 import time
-import sys
 from scapy.all import *
 import random
 
 from route import urls
-from helper import file_helper
+from helper import file_helper, dns_helper
 
 packet_sender_instance_name = 'packet_sender_api_app'
 conf.iface = 'eth0'
@@ -47,14 +41,12 @@ class PacketSender(app_manager.RyuApp):
         wsgi.register(PacketSenderController,
                       {packet_sender_instance_name: self})
 
-    # Hostname
-    def send_time_hostname(self):
+    def send_by_time(self):
         total = 0
         json_data = file_helper.read_file('target.json')
 
-        Hostname = json_data['target']
-        ip = socket.gethostbyname(Hostname)
-        port = 80
+        ip = json_data['ip']
+        port = json_data['port']
 
         runtime = time.time() + 60
 
@@ -67,51 +59,14 @@ class PacketSender(app_manager.RyuApp):
                 print "Send one minute."
                 break
 
-    def send_count_hostname(self):
+    def send_by_count(self):
         total = 0
-
         json_data = file_helper.read_file('target.json')
-        Hostname = json_data['target']
-        ip = socket.gethostbyname(Hostname)
-        port = 80
+
+        ip = json_data['ip']
+        port = json_data['port']
         count = json_data['count']
 
-        while 1:
-            if total < count:
-                sendSYN(ip, port).run()
-                total += 1
-                print total
-            else:
-                print "Send " + str(total) + " packet"
-                break
-
-    # IP address
-    def send_time_ip(self):
-        total = 0
-        json_data = file_helper.read_file('target.json')
-
-        ipaddr = json_data['target']
-        ip = ipaddr.split(':')[0]
-        port = int(ipaddr.split(':')[1])
-        runtime = time.time() + 60
-
-        while 1:
-            if time.time() < runtime:
-                sendSYN(ip, port).run()
-                total += 1
-                print total
-            else:
-                print "Send one minute."
-                break
-
-    def send_count_ip(self):
-        total = 0
-
-        json_data = file_helper.read_file('target.json')
-        ipaddr = json_data['target']
-        ip = ipaddr.split(':')[0]
-        port = int(ipaddr.split(':')[1])
-        count = int(json_data['count'])
         while 1:
             if total < count:
                 sendSYN(ip, port).run()
@@ -128,55 +83,19 @@ class PacketSenderController(ControllerBase):
         super(PacketSenderController, self).__init__(req, link, data, **config)
         self.packet_sender_spp = data[packet_sender_instance_name]
 
-    # hostname
-    @route('packet_sender', urls.hostname_time, methods=['POST'])
-    def hn_sendpacket_bytime(self, req, **kwargs):
-
-        packet_sender = self.packet_sender_spp
-        Info = json.loads(req.body)
-
-        try:
-            file_helper.store_file(Info, 'target.json')
-            packet_sender.send_time_hostname()
-
-        except:
-            return Response(status=500)
-
-    @route('packet_sender', urls.hostname_count, methods=['POST'])
-    def hn_sendpacket_bycount(self, req, **kwargs):
-
-        packet_sender = self.packet_sender_spp
-        Info = json.loads(req.body)
-
-        try:
-            file_helper.store_file(Info, 'target.json')
-            packet_sender.send_count_hostname()
-
-        except:
-            return Response(status=500)
-
     # IP address
-    @route('packet_sender', urls.ip_time, methods=['POST'])
+    @route('packet_sender', urls.send_by_time, methods=['POST'])
     def ip_sendpacket_bytime(self, req, **kwargs):
-
-        packet_sender = self.packet_sender_spp
-        Info = json.loads(req.body)
-
         try:
-            file_helper.store_file(Info, 'target.json')
-            packet_sender.send_time_ip()
-
+            packet_sender = self.packet_sender_spp
+            packet_sender.send_by_time()
         except:
             return Response(status=500)
 
-    @route('packet_sender', urls.ip_count, methods=['POST'])
+    @route('packet_sender', urls.send_by_count, methods=['POST'])
     def ip_sendpacket_bycount(self, req, **kwargs):
-
-        packet_sender = self.packet_sender_spp
-        Info = json.loads(req.body)
         try:
-            file_helper.store_file(Info, 'target.json')
-            packet_sender.send_count_ip()
-
+            packet_sender = self.packet_sender_spp
+            packet_sender.send_by_count()
         except:
             return Response(status=500)

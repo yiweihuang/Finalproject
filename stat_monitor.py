@@ -12,7 +12,7 @@ from ryu.topology.api import get_switch
 from ryu.lib import hub
 
 from config import stat_data
-from helper import ofp_helper
+from helper import ofp_helper, file_helper, dns_helper
 from route import urls
 
 # from config import settings
@@ -47,10 +47,14 @@ class StatMonitor(app_manager.RyuApp):
 
     def _reset_flow(self, datapath):
         parser = datapath.ofproto_parser
+        info = file_helper.read_file('target.json')
+        ip = info['ip']
+        port = info['port']
+
         syn_ack_match = parser.OFPMatch(eth_type=ether.ETH_TYPE_IP,
                                         ip_proto=inet.IPPROTO_TCP,
-                                        ipv4_src=syn_flow.get('ip_dst'),
-                                        tcp_src=syn_flow.get('port_dst'))
+                                        ipv4_src=ip,
+                                        tcp_src=port)
 
         actions = [parser.OFPActionOutput(13)]
 
@@ -82,6 +86,9 @@ class StatMonitor(app_manager.RyuApp):
     @set_ev_cls(ofp_event.EventOFPFlowStatsReply, MAIN_DISPATCHER)
     def _flow_stats_reply_handler(self, ev):
         body = ev.msg.body
+        packet_info = file_helper.read_file('target.json')
+        packet_count = packet_info['count']
+
         for stat in body:
             if (self._is_syn_ack_rule(stat.match)):
                 stat_data.packet_count = stat.byte_count / 64
@@ -90,7 +97,7 @@ class StatMonitor(app_manager.RyuApp):
                 if (stat_data.packet_count == 0):
                     stat_data.prev_duration_msec = stat_data.duration_msec
 
-                if ((stat_data.packet_count >= group_ammount) & (stat_data.is_count == 0)):
+                if ((stat_data.packet_count >= packet_count) & (stat_data.is_count == 0)):
                     diff_time = stat_data.duration_msec - stat_data.prev_duration_msec
                     stat_data.diff_avg = diff_time
                     stat_data.is_count = 1
@@ -98,8 +105,12 @@ class StatMonitor(app_manager.RyuApp):
                 pass
 
     def _is_syn_ack_rule(self, match):
-        is_ip_dst = (match.get('ipv4_src') == syn_flow.get('ip_dst'))
-        is_tcp_dst = (match.get('tcp_src') == syn_flow.get('port_dst'))
+        packet_info = file_helper.read_file('target.json')
+        ip = packet_info['ip']
+        port = packet_info['port']
+
+        is_ip_dst = (match.get('ipv4_src') == ip)
+        is_tcp_dst = (match.get('tcp_src') == port)
 
         return is_ip_dst & is_tcp_dst
 
@@ -129,6 +140,12 @@ class StatMonitorController(ControllerBase):
     def stat_init(self, req, **kwargs):
         try:
             stat_monitor = self.stat_monitor_spp
+            req = json.loads(req.body)
+
+            ip, port = dns_helper.translate_target(req['target'])
+            info = file_helper.info_builder(ip, port, req['count'])
+            file_helper.store_file(info, 'target.json')
+
             stat_monitor.reset_counter()
 
             stat_data.diff_arr = []

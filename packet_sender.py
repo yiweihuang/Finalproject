@@ -1,18 +1,19 @@
-import json
-
-from ryu.app import simple_switch_13
+from ryu.base import app_manager
 from webob import Response
 from ryu.controller import ofp_event
 from ryu.controller.handler import CONFIG_DISPATCHER
 from ryu.controller.handler import set_ev_cls
 from ryu.app.wsgi import ControllerBase, WSGIApplication, route
+from ryu.lib import dpid as dpid_lib
+import json
 import socket
 import time
+import sys
+from scapy.all import *
+import random
 
 from route import urls
 from helper import file_helper
-from scapy.all import *
-import random
 
 packet_sender_instance_name = 'packet_sender_api_app'
 conf.iface = 'eth0'
@@ -35,7 +36,7 @@ class sendSYN():
         send(i/t, verbose=0)
 
 
-class PacketSender(simple_switch_13.SimpleSwitch13):
+class PacketSender(app_manager.RyuApp):
 
     _CONTEXTS = {'wsgi': WSGIApplication}
 
@@ -46,23 +47,10 @@ class PacketSender(simple_switch_13.SimpleSwitch13):
         wsgi.register(PacketSenderController,
                       {packet_sender_instance_name: self})
 
-    @set_ev_cls(ofp_event.EventOFPSwitchFeatures, CONFIG_DISPATCHER)
-    def switch_features_handler(self, ev):
-        super(PacketSender, self).switch_features_handler(ev)
-        datapath = ev.msg.datapath
-        self.switches[datapath.id] = datapath
-        self.mac_to_port.setdefault(datapath.id, {})
-
-    def store_file(self, info, filename):
-        path = '../config/' + filename
-        with open(path, 'w') as f:
-            f.write(json.dumps(info))
-        f.close()
-
     # Hostname
     def send_time_hostname(self):
         total = 0
-        with open('../config/target.json', 'r') as f:
+        with open('./config/target.json', 'r') as f:
             json_data = json.load(f)
             Hostname = json_data['target']
             ip = socket.gethostbyname(Hostname)
@@ -80,7 +68,7 @@ class PacketSender(simple_switch_13.SimpleSwitch13):
 
     def send_count_hostname(self):
         total = 0
-        with open('../config/target.json', 'r') as f:
+        with open('./config/target.json', 'r') as f:
             json_data = json.load(f)
             Hostname = json_data['target']
             ip = socket.gethostbyname(Hostname)
@@ -122,8 +110,7 @@ class PacketSender(simple_switch_13.SimpleSwitch13):
         ipaddr = json_data['target']
         ip = ipaddr.split(':')[0]
         port = int(ipaddr.split(':')[1])
-        count = json_data['count']
-
+        count = int(json_data['count'])
         while 1:
             if total < count:
                 sendSYN(ip, port).run()
@@ -186,7 +173,6 @@ class PacketSenderController(ControllerBase):
 
         packet_sender = self.packet_sender_spp
         Info = json.loads(req.body)
-
         try:
             file_helper.store_file(Info, 'target.json')
             packet_sender.send_count_ip()

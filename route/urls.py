@@ -1,9 +1,7 @@
 # send packet
-hostname_time = '/send_packet/hostname/time'
-hostname_count = '/send_packet/hostname'
-ip_time = '/send_packet/ip_port/time'
-ip_count = '/send_packet/ip_port'
+send_by_time = '/send_packet/time'
+send_by_count = '/send_packet/count'
 
 # stat_monitor
 stat_get = '/stat'
-stat_init = '/stat/init'
+stat_init = '/init'
